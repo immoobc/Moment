@@ -1,0 +1,6 @@
+[Details]
+  Icon = "assets/icon.png"
+  Name = "此刻 Moment"
+  ID = "com.moment.clock"
+  Version = "1.0.0"
+  Build = 1

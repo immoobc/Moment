@@ -47,18 +47,25 @@ func NewMomentApp() *MomentApp {
 		m.window = m.fyneApp.NewWindow("此刻 Moment")
 	}
 	m.window.SetPadded(false)
-	m.window.Resize(fyne.NewSize(300, 90))
+	m.window.Resize(fyne.NewSize(320, 130))
 
 	m.windowMgr = core.NewWindowManager(m.window, m.config)
-	m.clock = ui.NewClockWidget()
+
+	// Determine initial theme from config
+	initTheme := core.ThemeLight
+	if m.config != nil {
+		initTheme = m.config.Get().Theme
+	}
+	m.clock = ui.NewClockWidget(initTheme)
 
 	m.menu = ui.NewContextMenu(ui.ContextMenuDeps{
-		WindowMgr: m.windowMgr,
-		Config:    m.config,
-		Quit:      m.Quit,
+		WindowMgr:   m.windowMgr,
+		Config:      m.config,
+		Quit:        m.Quit,
+		SwitchTheme: m.switchTheme,
 	})
 
-	wrapper := newDraggableClock(m.clock, m.windowMgr)
+	wrapper := newDraggableClock(m.clock, m.windowMgr, m.menu, m.window)
 	m.window.SetContent(wrapper)
 
 	// System tray
@@ -79,6 +86,15 @@ func NewMomentApp() *MomentApp {
 	})
 
 	return m
+}
+
+func (m *MomentApp) switchTheme(t core.ThemeMode) {
+	m.clock.SetTheme(t)
+	if m.config != nil {
+		_ = m.config.Update(func(c *core.Config) {
+			c.Theme = t
+		})
+	}
 }
 
 func (m *MomentApp) Run() {

@@ -20,6 +20,9 @@ func TestDefaultConfig(t *testing.T) {
 	if cfg.Locked {
 		t.Error("expected Locked=false")
 	}
+	if cfg.Theme != ThemeLight {
+		t.Errorf("expected ThemeLight, got %d", cfg.Theme)
+	}
 }
 
 func TestSaveAndLoad(t *testing.T) {

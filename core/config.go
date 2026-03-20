@@ -16,12 +16,21 @@ const (
 	LevelNormal
 )
 
+// ThemeMode represents the clock visual theme.
+type ThemeMode int
+
+const (
+	ThemeLight ThemeMode = iota // 日历白（Apple Calendar style）
+	ThemeDark                   // 暗夜黑
+)
+
 // Config holds all persistent application settings.
 type Config struct {
 	WindowLevel WindowLevel `json:"window_level"`
 	PositionX   float32     `json:"position_x"`
 	PositionY   float32     `json:"position_y"`
 	Locked      bool        `json:"locked"`
+	Theme       ThemeMode   `json:"theme"`
 }
 
 // DefaultConfig returns the default configuration.
@@ -31,6 +40,7 @@ func DefaultConfig() Config {
 		PositionX:   100,
 		PositionY:   100,
 		Locked:      false,
+		Theme:       ThemeLight,
 	}
 }
 

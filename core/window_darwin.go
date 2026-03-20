@@ -40,3 +40,6 @@ func GetCursorScreenPos() (int32, int32) { return 0, 0 }
 
 // GetWindowScreenRect is a no-op stub on macOS.
 func GetWindowScreenRect() (int32, int32, int32, int32) { return 0, 0, 0, 0 }
+
+// RefreshRoundRegion is a no-op on macOS.
+func RefreshRoundRegion() {}

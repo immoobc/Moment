@@ -8,12 +8,13 @@ import (
 
 // ContextMenuDeps holds dependencies for the context menu.
 type ContextMenuDeps struct {
-	WindowMgr *core.WindowManager
-	Config    *core.ConfigStore
-	Quit      func()
+	WindowMgr   *core.WindowManager
+	Config      *core.ConfigStore
+	Quit        func()
+	SwitchTheme func(core.ThemeMode) // callback to switch theme
 }
 
-// ContextMenu manages the system tray menu.
+// ContextMenu manages both the system tray menu and the right-click popup.
 type ContextMenu struct {
 	deps ContextMenuDeps
 }
@@ -22,14 +23,21 @@ func NewContextMenu(deps ContextMenuDeps) *ContextMenu {
 	return &ContextMenu{deps: deps}
 }
 
-// Menu returns a fyne.Menu (used for system tray).
+// Menu returns a fyne.Menu for the system tray.
 func (c *ContextMenu) Menu() *fyne.Menu {
+	return c.build()
+}
+
+// PopupMenu returns a fyne.Menu suitable for right-click popup on the clock.
+// It has the same items as the tray menu.
+func (c *ContextMenu) PopupMenu() *fyne.Menu {
 	return c.build()
 }
 
 func (c *ContextMenu) build() *fyne.Menu {
 	return fyne.NewMenu("此刻",
 		c.buildWindowMenu(),
+		c.buildThemeMenu(),
 		fyne.NewMenuItemSeparator(),
 		fyne.NewMenuItem("退出", func() {
 			if c.deps.Quit != nil {
@@ -73,5 +81,30 @@ func (c *ContextMenu) buildWindowMenu() *fyne.MenuItem {
 
 	item := fyne.NewMenuItem("窗口", nil)
 	item.ChildMenu = fyne.NewMenu("", top, normal, fyne.NewMenuItemSeparator(), lock)
+	return item
+}
+
+func (c *ContextMenu) buildThemeMenu() *fyne.MenuItem {
+	curTheme := core.ThemeLight
+	if c.deps.Config != nil {
+		curTheme = c.deps.Config.Get().Theme
+	}
+
+	light := fyne.NewMenuItem("☀ 日历白", func() {
+		if c.deps.SwitchTheme != nil {
+			c.deps.SwitchTheme(core.ThemeLight)
+		}
+	})
+	light.Checked = curTheme == core.ThemeLight
+
+	dark := fyne.NewMenuItem("🌙 暗夜黑", func() {
+		if c.deps.SwitchTheme != nil {
+			c.deps.SwitchTheme(core.ThemeDark)
+		}
+	})
+	dark.Checked = curTheme == core.ThemeDark
+
+	item := fyne.NewMenuItem("主题", nil)
+	item.ChildMenu = fyne.NewMenu("", light, dark)
 	return item
 }

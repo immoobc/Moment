@@ -166,6 +166,9 @@ func (w *WindowManager) DragEnd() {
 	pos := w.position
 	w.mu.Unlock()
 
+	// Re-apply round corners in case window moved to a monitor with different DPI
+	RefreshRoundRegion()
+
 	if w.config != nil {
 		_ = w.config.Update(func(c *Config) {
 			c.PositionX = pos.X

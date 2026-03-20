@@ -2,54 +2,50 @@ package main
 
 import (
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/widget"
 
 	"moment/core"
 	"moment/ui"
 )
 
-// draggableClock wraps a ClockWidget to support window dragging (controlled
-// by WindowManager lock state) and right-click context menu display.
+// draggableClock wraps a ClockWidget to support window dragging.
 type draggableClock struct {
-	*ui.ClockWidget
-	windowMgr *core.WindowManager
-	window    fyne.Window
-	menu      *ui.ContextMenu
+	widget.BaseWidget
+	clock      *ui.ClockWidget
+	windowMgr  *core.WindowManager
+	dragActive bool
 }
 
-func newDraggableClock(clock *ui.ClockWidget, wm *core.WindowManager, win fyne.Window) *draggableClock {
+func newDraggableClock(clock *ui.ClockWidget, wm *core.WindowManager) *draggableClock {
 	d := &draggableClock{
-		ClockWidget: clock,
-		windowMgr:   wm,
-		window:      win,
+		clock:     clock,
+		windowMgr: wm,
 	}
+	d.ExtendBaseWidget(d)
+	clock.SetOnTick(func() {
+		d.Refresh()
+	})
 	return d
 }
 
-// setMenu sets the context menu reference.
-func (d *draggableClock) setMenu(menu *ui.ContextMenu) {
-	d.menu = menu
+func (d *draggableClock) CreateRenderer() fyne.WidgetRenderer {
+	return d.clock.CreateRenderer()
 }
 
-// Dragged implements fyne.Draggable — guards against locked position.
-func (d *draggableClock) Dragged(ev *fyne.DragEvent) {
-	if d.windowMgr != nil && d.windowMgr.IsLocked() {
+func (d *draggableClock) Dragged(_ *fyne.DragEvent) {
+	if d.windowMgr == nil || d.windowMgr.IsLocked() {
 		return
 	}
-	// Fyne handles native window movement for borderless/splash windows.
-}
-
-// DragEnd implements fyne.Draggable — persists position when unlocked.
-func (d *draggableClock) DragEnd() {
-	if d.windowMgr != nil && !d.windowMgr.IsLocked() {
-		// Position persistence is handled by WindowManager when the
-		// window is moved. Fyne borderless windows handle the actual
-		// move natively.
+	if !d.dragActive {
+		d.dragActive = true
+		d.windowMgr.BeginDrag()
 	}
+	d.windowMgr.DragUpdate()
 }
 
-// TappedSecondary implements fyne.SecondaryTappable — shows the context menu.
-func (d *draggableClock) TappedSecondary(ev *fyne.PointEvent) {
-	if d.menu != nil {
-		d.menu.ShowAtPosition(d.window.Canvas(), ev.Position)
+func (d *draggableClock) DragEnd() {
+	d.dragActive = false
+	if d.windowMgr != nil && !d.windowMgr.IsLocked() {
+		d.windowMgr.DragEnd()
 	}
 }

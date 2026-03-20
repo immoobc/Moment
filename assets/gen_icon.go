@@ -1,6 +1,6 @@
 //go:build ignore
 
-// gen_icon.go generates a 64x64 pixel-art peach icon as icon.png.
+// gen_icon.go generates a 64x64 pixel-art cat face icon as icon.png.
 // Run: go run assets/gen_icon.go
 package main
 
@@ -15,137 +15,212 @@ func main() {
 	const size = 64
 	img := image.NewRGBA(image.Rect(0, 0, size, size))
 
-	// transparent background
+	// Transparent background
 	for y := 0; y < size; y++ {
 		for x := 0; x < size; x++ {
 			img.Set(x, y, color.Transparent)
 		}
 	}
 
-	// Colors
-	stem := color.RGBA{90, 140, 60, 255}     // green stem
-	leaf := color.RGBA{100, 180, 70, 255}    // green leaf
-	leafD := color.RGBA{70, 150, 50, 255}    // darker leaf
-	peachL := color.RGBA{255, 180, 130, 255} // light peach
-	peachM := color.RGBA{255, 140, 100, 255} // mid peach
-	peachD := color.RGBA{230, 110, 80, 255}  // dark peach
-	blush := color.RGBA{255, 100, 100, 255}  // blush
-	outline := color.RGBA{140, 70, 50, 255}  // brown outline
-	highlight := color.RGBA{255, 220, 200, 255}
-
-	// Helper: draw a filled rect of "pixels" (each pixel = 2x2 actual pixels for crispness at 64x64)
+	// Each "pixel" is 2x2 actual pixels (32x32 grid → 64x64 image)
 	px := 2
 	set := func(gx, gy int, c color.Color) {
 		for dy := 0; dy < px; dy++ {
 			for dx := 0; dx < px; dx++ {
 				xx := gx*px + dx
 				yy := gy*px + dy
-				if xx < size && yy < size {
+				if xx >= 0 && xx < size && yy >= 0 && yy < size {
 					img.Set(xx, yy, c)
 				}
 			}
 		}
 	}
 
-	// Stem (top center)
-	for _, p := range [][2]int{{15, 4}, {15, 5}, {15, 6}, {16, 3}, {16, 4}, {16, 5}} {
-		set(p[0], p[1], stem)
-	}
+	// Colors
+	outline := color.RGBA{50, 50, 50, 255}     // dark outline
+	fur := color.RGBA{255, 180, 80, 255}       // orange fur
+	furDark := color.RGBA{220, 150, 60, 255}   // darker fur / stripes
+	furLight := color.RGBA{255, 210, 140, 255} // lighter fur
+	white := color.RGBA{255, 255, 255, 255}    // eye whites / muzzle
+	eyeGreen := color.RGBA{80, 200, 100, 255}  // iris
+	pupil := color.RGBA{30, 30, 30, 255}       // pupil
+	nosePink := color.RGBA{255, 140, 150, 255} // nose
+	innerEar := color.RGBA{255, 160, 160, 255} // inner ear pink
+	mouth := color.RGBA{80, 60, 60, 255}       // mouth line
 
-	// Leaf (right of stem)
+	// ---- Left ear (rows 2-8, cols 3-8) ----
+	// Outline
 	for _, p := range [][2]int{
-		{17, 4}, {18, 3}, {18, 4}, {19, 3}, {19, 4}, {20, 4},
-		{17, 5}, {18, 5}, {19, 5},
+		{4, 2}, {3, 3}, {3, 4}, {3, 5}, {3, 6}, {4, 7},
+		{5, 2}, {5, 7},
+		{6, 3}, {6, 7},
+		{7, 4}, {7, 5}, {7, 6}, {7, 7},
 	} {
-		set(p[0], p[1], leaf)
+		set(p[0], p[1], outline)
 	}
-	for _, p := range [][2]int{{18, 4}, {19, 4}} {
-		set(p[0], p[1], leafD)
+	// Fill
+	for _, p := range [][2]int{
+		{4, 3}, {4, 4}, {4, 5}, {4, 6},
+		{5, 3}, {5, 4}, {5, 5}, {5, 6},
+		{6, 4}, {6, 5}, {6, 6},
+	} {
+		set(p[0], p[1], fur)
+	}
+	// Inner ear pink
+	for _, p := range [][2]int{
+		{4, 4}, {4, 5},
+		{5, 4}, {5, 5},
+	} {
+		set(p[0], p[1], innerEar)
 	}
 
-	// Peach body outline (roughly circular, rows 7-27, cols 8-24)
-	// Top outline
-	for x := 12; x <= 20; x++ {
+	// ---- Right ear (rows 2-8, cols 23-28) ----
+	for _, p := range [][2]int{
+		{27, 2}, {28, 3}, {28, 4}, {28, 5}, {28, 6}, {27, 7},
+		{26, 2}, {26, 7},
+		{25, 3}, {25, 7},
+		{24, 4}, {24, 5}, {24, 6}, {24, 7},
+	} {
+		set(p[0], p[1], outline)
+	}
+	for _, p := range [][2]int{
+		{27, 3}, {27, 4}, {27, 5}, {27, 6},
+		{26, 3}, {26, 4}, {26, 5}, {26, 6},
+		{25, 4}, {25, 5}, {25, 6},
+	} {
+		set(p[0], p[1], fur)
+	}
+	for _, p := range [][2]int{
+		{27, 4}, {27, 5},
+		{26, 4}, {26, 5},
+	} {
+		set(p[0], p[1], innerEar)
+	}
+
+	// ---- Head outline (rows 7-26, cols 5-26) ----
+	// Top
+	for x := 8; x <= 23; x++ {
 		set(x, 7, outline)
 	}
-	// Left outline
-	for y := 8; y <= 10; y++ {
-		set(10, y, outline)
-		set(11, y, outline)
+	// Sides
+	for y := 8; y <= 25; y++ {
+		set(6, y, outline)
+		set(25, y, outline)
 	}
-	for y := 11; y <= 24; y++ {
-		set(8, y, outline)
-		set(9, y, outline)
-	}
-	// Right outline
-	for y := 8; y <= 10; y++ {
-		set(21, y, outline)
-		set(22, y, outline)
-	}
-	for y := 11; y <= 24; y++ {
-		set(23, y, outline)
-		set(24, y, outline)
-	}
-	// Bottom outline
-	for x := 10; x <= 22; x++ {
-		set(x, 25, outline)
+	// Corners
+	set(7, 7, outline)
+	set(7, 8, outline)
+	set(24, 7, outline)
+	set(24, 8, outline)
+	// Bottom
+	for x := 7; x <= 24; x++ {
 		set(x, 26, outline)
 	}
 	// Bottom corners
-	set(9, 24, outline)
-	set(9, 25, outline)
-	set(23, 24, outline)
-	set(23, 25, outline)
+	set(7, 25, outline)
+	set(24, 25, outline)
 
-	// Fill peach body — light
-	for y := 8; y <= 24; y++ {
-		xStart, xEnd := 10, 22
-		if y <= 10 {
-			xStart, xEnd = 12, 20
-		}
-		if y >= 24 {
-			xStart, xEnd = 10, 22
-		}
-		for x := xStart; x <= xEnd; x++ {
-			set(x, y, peachL)
+	// ---- Head fill ----
+	for y := 8; y <= 25; y++ {
+		for x := 7; x <= 24; x++ {
+			set(x, y, fur)
 		}
 	}
-
-	// Mid tone (lower half)
-	for y := 17; y <= 24; y++ {
-		for x := 10; x <= 22; x++ {
-			set(x, y, peachM)
-		}
+	// Top row fill
+	for x := 8; x <= 23; x++ {
+		set(x, 8, fur)
 	}
 
-	// Dark shadow (bottom-left)
-	for y := 20; y <= 24; y++ {
-		for x := 10; x <= 14; x++ {
-			set(x, y, peachD)
-		}
-	}
-
-	// Blush (center)
+	// ---- Forehead stripes ----
 	for _, p := range [][2]int{
-		{14, 15}, {15, 15}, {16, 15},
-		{14, 16}, {15, 16}, {16, 16},
-		{15, 17},
+		{14, 8}, {15, 8}, {16, 8}, {17, 8},
+		{15, 9}, {16, 9},
+		{11, 9}, {12, 9},
+		{19, 9}, {20, 9},
 	} {
-		set(p[0], p[1], blush)
+		set(p[0], p[1], furDark)
 	}
 
-	// Highlight (top-right)
+	// ---- Eyes (row 13-16) ----
+	// Left eye white
+	for y := 13; y <= 16; y++ {
+		for x := 9; x <= 13; x++ {
+			set(x, y, white)
+		}
+	}
+	// Right eye white
+	for y := 13; y <= 16; y++ {
+		for x := 18; x <= 22; x++ {
+			set(x, y, white)
+		}
+	}
+	// Left iris
 	for _, p := range [][2]int{
-		{18, 9}, {19, 9},
-		{18, 10}, {19, 10},
-		{19, 11},
+		{10, 14}, {11, 14}, {12, 14},
+		{10, 15}, {11, 15}, {12, 15},
 	} {
-		set(p[0], p[1], highlight)
+		set(p[0], p[1], eyeGreen)
+	}
+	// Right iris
+	for _, p := range [][2]int{
+		{19, 14}, {20, 14}, {21, 14},
+		{19, 15}, {20, 15}, {21, 15},
+	} {
+		set(p[0], p[1], eyeGreen)
+	}
+	// Left pupil
+	for _, p := range [][2]int{{11, 14}, {11, 15}} {
+		set(p[0], p[1], pupil)
+	}
+	// Right pupil
+	for _, p := range [][2]int{{20, 14}, {20, 15}} {
+		set(p[0], p[1], pupil)
+	}
+	// Eye highlights
+	set(12, 14, white)
+	set(21, 14, white)
+
+	// ---- Nose (row 18-19) ----
+	for _, p := range [][2]int{
+		{15, 18}, {16, 18},
+		{15, 19}, {16, 19},
+	} {
+		set(p[0], p[1], nosePink)
 	}
 
-	// Peach crease (vertical center line)
-	for y := 8; y <= 24; y++ {
-		set(16, y, peachD)
+	// ---- Muzzle / cheeks (row 17-22) ----
+	// White muzzle area
+	for y := 19; y <= 23; y++ {
+		for x := 12; x <= 19; x++ {
+			set(x, y, furLight)
+		}
+	}
+	for _, p := range [][2]int{
+		{13, 20}, {14, 20}, {15, 20}, {16, 20}, {17, 20}, {18, 20},
+		{14, 21}, {15, 21}, {16, 21}, {17, 21},
+	} {
+		set(p[0], p[1], white)
+	}
+
+	// ---- Mouth ----
+	set(15, 21, mouth)
+	set(16, 21, mouth)
+	set(14, 22, mouth)
+	set(17, 22, mouth)
+
+	// ---- Whiskers ----
+	whiskerClr := color.RGBA{100, 80, 70, 200}
+	// Left whiskers
+	for _, p := range [][2]int{
+		{7, 17}, {8, 18}, {7, 19}, {8, 20},
+	} {
+		set(p[0], p[1], whiskerClr)
+	}
+	// Right whiskers
+	for _, p := range [][2]int{
+		{24, 17}, {23, 18}, {24, 19}, {23, 20},
+	} {
+		set(p[0], p[1], whiskerClr)
 	}
 
 	f, err := os.Create("assets/icon.png")

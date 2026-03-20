@@ -14,6 +14,13 @@ type WindowManager struct {
 	locked   bool
 	position fyne.Position
 	config   *ConfigStore
+
+	// drag state — screen coordinates at drag start
+	dragging         bool
+	dragStartCursorX int32
+	dragStartCursorY int32
+	dragStartWinX    int32
+	dragStartWinY    int32
 }
 
 // NewWindowManager creates a WindowManager for the given window.
@@ -117,4 +124,52 @@ func (w *WindowManager) applyLevel() {
 	}
 
 	applyWindowLevel(win, level)
+}
+
+// BeginDrag records the cursor and window position at drag start.
+func (w *WindowManager) BeginDrag() {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if w.locked {
+		return
+	}
+	cx, cy := GetCursorScreenPos()
+	wx, wy, _, _ := GetWindowScreenRect()
+	w.dragStartCursorX = cx
+	w.dragStartCursorY = cy
+	w.dragStartWinX = wx
+	w.dragStartWinY = wy
+	w.dragging = true
+}
+
+// DragUpdate moves the window based on current cursor position relative to drag start.
+func (w *WindowManager) DragUpdate() {
+	w.mu.Lock()
+	if w.locked || !w.dragging {
+		w.mu.Unlock()
+		return
+	}
+	cx, cy := GetCursorScreenPos()
+	newX := w.dragStartWinX + (cx - w.dragStartCursorX)
+	newY := w.dragStartWinY + (cy - w.dragStartCursorY)
+	w.position.X = float32(newX)
+	w.position.Y = float32(newY)
+	w.mu.Unlock()
+
+	moveWindowTo(float32(newX), float32(newY))
+}
+
+// DragEnd finishes dragging and persists position.
+func (w *WindowManager) DragEnd() {
+	w.mu.Lock()
+	w.dragging = false
+	pos := w.position
+	w.mu.Unlock()
+
+	if w.config != nil {
+		_ = w.config.Update(func(c *Config) {
+			c.PositionX = pos.X
+			c.PositionY = pos.Y
+		})
+	}
 }

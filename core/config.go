@@ -8,24 +8,6 @@ import (
 	"sync"
 )
 
-// DisplayMode represents the clock display mode.
-type DisplayMode int
-
-const (
-	ModeDigital   DisplayMode = iota // "15:04:05"
-	ModeAnalog                       // Analog clock face
-	ModeTimestamp                    // Unix timestamp
-)
-
-// ThemeMode represents the application theme.
-type ThemeMode int
-
-const (
-	ThemeLight ThemeMode = iota
-	ThemeDark
-	ThemeSystem
-)
-
 // WindowLevel represents the window z-order level.
 type WindowLevel int
 
@@ -36,29 +18,19 @@ const (
 
 // Config holds all persistent application settings.
 type Config struct {
-	DisplayMode  DisplayMode `json:"display_mode"`
-	ThemeMode    ThemeMode   `json:"theme_mode"`
-	WindowLevel  WindowLevel `json:"window_level"`
-	PositionX    float32     `json:"position_x"`
-	PositionY    float32     `json:"position_y"`
-	Locked       bool        `json:"locked"`
-	RestEnabled  bool        `json:"rest_enabled"`
-	RestInterval int         `json:"rest_interval_minutes"`
-	RestOpacity  float64     `json:"rest_opacity"`
+	WindowLevel WindowLevel `json:"window_level"`
+	PositionX   float32     `json:"position_x"`
+	PositionY   float32     `json:"position_y"`
+	Locked      bool        `json:"locked"`
 }
 
 // DefaultConfig returns the default configuration.
 func DefaultConfig() Config {
 	return Config{
-		DisplayMode:  ModeDigital,
-		ThemeMode:    ThemeSystem,
-		WindowLevel:  LevelTopMost,
-		PositionX:    100,
-		PositionY:    100,
-		Locked:       false,
-		RestEnabled:  true,
-		RestInterval: 45,
-		RestOpacity:  0.7,
+		WindowLevel: LevelTopMost,
+		PositionX:   100,
+		PositionY:   100,
+		Locked:      false,
 	}
 }
 

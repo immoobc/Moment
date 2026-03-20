@@ -28,3 +28,15 @@ import "fyne.io/fyne/v2"
 func applyWindowLevel(win fyne.Window, level WindowLevel) {
 	C.setWindowLevel(C.int(level))
 }
+
+// RemoveTitleBar is handled by the splash window on macOS; this is a no-op fallback.
+func RemoveTitleBar() {}
+
+// moveWindowTo is a no-op on macOS; splash windows handle drag natively.
+func moveWindowTo(x, y float32) {}
+
+// GetCursorScreenPos is a no-op stub on macOS.
+func GetCursorScreenPos() (int32, int32) { return 0, 0 }
+
+// GetWindowScreenRect is a no-op stub on macOS.
+func GetWindowScreenRect() (int32, int32, int32, int32) { return 0, 0, 0, 0 }

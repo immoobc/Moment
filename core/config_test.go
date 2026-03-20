@@ -14,17 +14,11 @@ func tempConfigPath(t *testing.T) string {
 
 func TestDefaultConfig(t *testing.T) {
 	cfg := DefaultConfig()
-	if cfg.DisplayMode != ModeDigital {
-		t.Errorf("expected ModeDigital, got %d", cfg.DisplayMode)
+	if cfg.WindowLevel != LevelTopMost {
+		t.Errorf("expected LevelTopMost, got %d", cfg.WindowLevel)
 	}
-	if cfg.ThemeMode != ThemeSystem {
-		t.Errorf("expected ThemeSystem, got %d", cfg.ThemeMode)
-	}
-	if cfg.RestInterval != 45 {
-		t.Errorf("expected 45, got %d", cfg.RestInterval)
-	}
-	if cfg.RestOpacity != 0.7 {
-		t.Errorf("expected 0.7, got %f", cfg.RestOpacity)
+	if cfg.Locked {
+		t.Error("expected Locked=false")
 	}
 }
 
@@ -32,32 +26,26 @@ func TestSaveAndLoad(t *testing.T) {
 	path := tempConfigPath(t)
 	store := NewConfigStoreWithPath(path)
 
-	// Update a field and save
 	err := store.Update(func(c *Config) {
-		c.DisplayMode = ModeAnalog
-		c.ThemeMode = ThemeDark
 		c.PositionX = 200
 		c.PositionY = 300
+		c.Locked = true
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	// Load into a new store
 	store2 := NewConfigStoreWithPath(path)
 	if err := store2.Load(); err != nil {
 		t.Fatal(err)
 	}
 
 	got := store2.Get()
-	if got.DisplayMode != ModeAnalog {
-		t.Errorf("expected ModeAnalog, got %d", got.DisplayMode)
-	}
-	if got.ThemeMode != ThemeDark {
-		t.Errorf("expected ThemeDark, got %d", got.ThemeMode)
-	}
 	if got.PositionX != 200 || got.PositionY != 300 {
 		t.Errorf("expected (200,300), got (%f,%f)", got.PositionX, got.PositionY)
+	}
+	if !got.Locked {
+		t.Error("expected Locked=true")
 	}
 }
 
@@ -69,14 +57,12 @@ func TestLoadMissingFile(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Should have defaults
 	got := store.Get()
 	expected := DefaultConfig()
 	if got != expected {
 		t.Errorf("expected defaults, got %+v", got)
 	}
 
-	// File should now exist
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		t.Error("expected config file to be created")
 	}
@@ -84,7 +70,6 @@ func TestLoadMissingFile(t *testing.T) {
 
 func TestLoadCorruptedFile(t *testing.T) {
 	path := tempConfigPath(t)
-	// Write garbage
 	if err := os.WriteFile(path, []byte("{invalid json!!!"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -100,7 +85,6 @@ func TestLoadCorruptedFile(t *testing.T) {
 		t.Errorf("expected defaults after corrupt load, got %+v", got)
 	}
 
-	// Verify the file was overwritten with valid JSON
 	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatal(err)

@@ -1,7 +1,15 @@
 @echo off
 REM ============================================================
-REM  Moment (此刻) Build Script
+REM  Moment (此刻) Build Script — Windows & macOS
 REM  Output: bin\
+REM
+REM  Usage:
+REM    build.bat              — build Windows amd64 only
+REM    build.bat all          — build Windows + macOS (needs cross toolchain for macOS)
+REM    build.bat mac          — build macOS only (run on macOS or with osxcross)
+REM
+REM  NOTE: Fyne uses CGO. First build takes 5-15 min (C deps).
+REM        Subsequent builds are fast (cached).
 REM ============================================================
 
 setlocal enabledelayedexpansion
@@ -9,62 +17,75 @@ setlocal enabledelayedexpansion
 set APP_NAME=moment
 set SRC=cmd\moment
 set OUTDIR=bin
+set LDFLAGS=-s -w
 
-echo ============================================
-echo   Building Moment Desktop Clock
-echo ============================================
-
-REM ----------------------------------------------------------
-REM  Detect TDM-GCC in common locations and add to PATH
-REM ----------------------------------------------------------
-where gcc >nul 2>nul
-if %errorlevel% neq 0 (
-    if exist "C:\TDM-GCC-64\bin\gcc.exe" (
-        set "PATH=C:\TDM-GCC-64\bin;%PATH%"
-        echo  [OK] Found TDM-GCC at C:\TDM-GCC-64\bin
-    ) else if exist "C:\TDM-GCC\bin\gcc.exe" (
-        set "PATH=C:\TDM-GCC\bin;%PATH%"
-        echo  [OK] Found TDM-GCC at C:\TDM-GCC\bin
-    ) else if exist "D:\TDM-GCC-64\bin\gcc.exe" (
-        set "PATH=D:\TDM-GCC-64\bin;%PATH%"
-        echo  [OK] Found TDM-GCC at D:\TDM-GCC-64\bin
-    ) else if exist "D:\TDM-GCC\bin\gcc.exe" (
-        set "PATH=D:\TDM-GCC\bin;%PATH%"
-        echo  [OK] Found TDM-GCC at D:\TDM-GCC\bin
-    ) else (
-        echo.
-        echo  ERROR: gcc not found in PATH or common locations.
-        echo  Please set GCC_PATH before running, e.g.:
-        echo    set "PATH=C:\your\gcc\bin;%%PATH%%"
-        echo    build.bat
-        echo.
-        goto :eof
-    )
-)
-
-echo  Using: & gcc --version 2>nul | findstr /i "gcc"
-echo.
-
-REM ----------------------------------------------------------
-REM  Build
-REM ----------------------------------------------------------
 if not exist "%OUTDIR%" mkdir "%OUTDIR%"
 
-echo [1/1] Building Windows amd64 ...
+REM --- Check gcc ---
+where gcc >nul 2>nul
+if %errorlevel% neq 0 (
+    echo [ERROR] gcc not found. Fyne requires CGO.
+    echo Install TDM-GCC or w64devkit and add to PATH.
+    goto :eof
+)
+
+set TARGET=%1
+if "%TARGET%"=="" set TARGET=win
+
+REM ----------------------------------------------------------
+if "%TARGET%"=="win" goto :build_win
+if "%TARGET%"=="all" goto :build_all
+if "%TARGET%"=="mac" goto :build_mac
+echo Unknown target: %TARGET%
+echo Usage: build.bat [win^|mac^|all]
+goto :eof
+
+REM ----------------------------------------------------------
+:build_all
+call :build_win
+call :build_mac
+goto :eof
+
+REM ----------------------------------------------------------
+:build_win
+echo.
+echo [Windows amd64] Building ...
 set GOOS=windows
 set GOARCH=amd64
 set CGO_ENABLED=1
-go build -ldflags="-s -w -H windowsgui" -o "%OUTDIR%\%APP_NAME%.exe" .\%SRC%
+go build -v -ldflags="%LDFLAGS% -H windowsgui" -o "%OUTDIR%\%APP_NAME%.exe" .\%SRC%
 if %errorlevel% neq 0 (
-    echo     BUILD FAILED
-    goto :done
+    echo [FAILED] Windows amd64
+) else (
+    echo [OK] %OUTDIR%\%APP_NAME%.exe
 )
-echo     OK: %OUTDIR%\%APP_NAME%.exe
+goto :eof
 
-:done
+REM ----------------------------------------------------------
+:build_mac
 echo.
-echo ============================================
-echo   Done.
-echo ============================================
+echo [macOS amd64] Building ...
+set GOOS=darwin
+set GOARCH=amd64
+set CGO_ENABLED=1
+go build -v -ldflags="%LDFLAGS%" -o "%OUTDIR%\%APP_NAME%-darwin-amd64" .\%SRC%
+if %errorlevel% neq 0 (
+    echo [FAILED] macOS amd64 — cross-compile needs osxcross or build on macOS
+) else (
+    echo [OK] %OUTDIR%\%APP_NAME%-darwin-amd64
+)
+
+echo.
+echo [macOS arm64] Building ...
+set GOOS=darwin
+set GOARCH=arm64
+set CGO_ENABLED=1
+go build -v -ldflags="%LDFLAGS%" -o "%OUTDIR%\%APP_NAME%-darwin-arm64" .\%SRC%
+if %errorlevel% neq 0 (
+    echo [FAILED] macOS arm64 — cross-compile needs osxcross or build on macOS
+) else (
+    echo [OK] %OUTDIR%\%APP_NAME%-darwin-arm64
+)
+goto :eof
 
 endlocal
